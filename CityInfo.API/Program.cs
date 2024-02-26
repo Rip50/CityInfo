@@ -26,8 +26,8 @@ builder.Services.AddSingleton<FileExtensionContentTypeProvider>();
 builder.Services.AddTransient<IValidator<PointOfInterestForCreationDto>, PointOfInterestValidation>();
 builder.Services.AddLogging();
 builder.Services.AddTransient<ILocalMailService, LocalMailService>();
-//builder.Services.AddDbContext<CityInfoContext>( x => x.UseSqlite("Data Source=CityInfo.db"));
-builder.Services.AddDbContext<CityInfoContext>();
+builder.Services.AddDbContext<CityInfoContext>( x => x.UseSqlite(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddTransient<CitiesDataStore>();
 
 var app = builder.Build();
 

@@ -1,4 +1,5 @@
-﻿using CityInfo.API.Models;
+﻿using CityInfo.API.Entities;
+using CityInfo.API.Models;
 
 namespace CityInfo.API
 {
@@ -6,41 +7,54 @@ namespace CityInfo.API
     {
         private object _lock = new object();
 
-        public List<CityDto> Cities { get; set; }
+        public CityInfoContext Context { get; set; }
 
-        public static CitiesDataStore Current { get; set; } = new CitiesDataStore();
-
-        private CitiesDataStore()
+        public CitiesDataStore(CityInfoContext context)
         {
-            Cities = new List<CityDto>()
+            Context = context;
+        }
+
+        public IEnumerable<CityDto> GetCities()
+        {
+            return Context.Cities.Select(c => new CityDto
             {
-                new CityDto() { Id = 1, Name="Malaga", Description="Great city",
-                    PointsOfInterests =
-                    {
-                        new PointOfInterestDto() { Id = 1, Name = "Name_1", Description = "Description_1"},
-                        new PointOfInterestDto() { Id = 2, Name = "Name_2", Description = "Description_2"},
-                    } 
-                },
-                new CityDto() { Id = 2, Name="Seville", Description="Where I'm going to go",
-                    PointsOfInterests =
-                    {
-                        new PointOfInterestDto() { Id = 3, Name = "Name_3", Description = "Description_3"},
-                        new PointOfInterestDto() { Id = 4, Name = "Name_4", Description = "Description_4"},
-                    } 
-                },
-                new CityDto() { Id = 3, Name="NYC", Description="I was there",
-                    PointsOfInterests =
-                    {
-                        new PointOfInterestDto() { Id = 5, Name = "Name_5", Description = "Description_5"},
-                        new PointOfInterestDto() { Id = 6, Name = "Name_6", Description = "Description_6"},
-                    }
-                }
+                Id = c.Id,
+                Name = c.Name,
+                Description = c.Description,
+                PointsOfInterests = c.PointsOfInterests.Select(poi => new PointOfInterestDto
+                {
+                    Id = poi.Id,
+                    Name = poi.Name,
+                    Description = poi.Description
+                }).ToList()
+            }).ToList();
+        }
+
+        public CityDto? GetCity(int id)
+        {
+            var cityEntity = Context.Cities.FirstOrDefault(x => x.Id == id);
+            if (cityEntity == null)
+            {
+                return null;
+            }
+
+            return new CityDto
+            {
+                Id = cityEntity.Id,
+                Name = cityEntity.Name,
+                Description = cityEntity.Description,
+                PointsOfInterests = cityEntity.PointsOfInterests.Select(poi => new PointOfInterestDto
+                {
+                    Id = poi.Id,
+                    Name = poi.Name,
+                    Description = poi.Description
+                }).ToList()
             };
         }
 
         public PointOfInterestDto CreatePointOfInterest(int cityId, PointOfInterestForCreationDto pointOfInterest)
         {
-            var city = Cities.FirstOrDefault(c => c.Id == cityId);
+            var city = Context.Cities.FirstOrDefault(c => c.Id == cityId);
             if (city == null)
             {
                 throw new ArgumentException("City not found", nameof(cityId));
@@ -48,12 +62,18 @@ namespace CityInfo.API
 
             lock (_lock)
             {
-                var lastId = Cities.Max(c => c.PointsOfInterests.Max(pointOfInterest => pointOfInterest.Id));
-
-                var newId = lastId + 1;
-                var poi = new PointOfInterestDto { Id = newId, Name = pointOfInterest.Name, Description = pointOfInterest.Description };
+                var poi = new PointOfInterest(pointOfInterest.Name) { Description = pointOfInterest.Description, City = city, CityId = city.Id };
                 city.PointsOfInterests.Add(poi);
-                return poi;
+                Context.PointsOfInterest.Add(poi);
+
+                Context.SaveChanges();
+
+                return new PointOfInterestDto
+                {
+                    Id = poi.Id,
+                    Name = poi.Name,
+                    Description = poi.Description
+                };
             }
         }
     }
