@@ -7,23 +7,23 @@ namespace CityInfo.API.Controllers;
 [Route("api/cities")]
 public class CitiesController : ControllerBase
 {
-    private CitiesDataStore _dataStore;
+    private ICityInfoRepository _dataStore;
 
-    public CitiesController(CitiesDataStore dataStore)
+    public CitiesController(ICityInfoRepository dataStore)
     {
         _dataStore = dataStore;
     }
 
-    public IActionResult GetCities()
+    public async Task<IActionResult> GetCities()
     {
-        return Ok(_dataStore.GetCities());
+        return Ok(await _dataStore.GetCities());
     }
 
     [HttpGet]
     [Route("{id}")]
-    public ActionResult<CityDto> GetCity(int id)
+    public async Task<ActionResult<CityDto>> GetCity(int id)
     {
-        var city = _dataStore.GetCity(id);
+        var city = await _dataStore.GetCity(id);
         if (city == null)
         {
             return NotFound();

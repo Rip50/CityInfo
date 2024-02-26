@@ -9,6 +9,8 @@ namespace CityInfo.API.Entities
         {
             // Causes issues with migrations
             //Database.EnsureCreated();
+
+            //Cities.Include(c => c.PointsOfInterests);
         }
 
         public DbSet<City> Cities { get; set; } = null!;
