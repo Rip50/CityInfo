@@ -1,10 +1,12 @@
 ﻿using CityInfo.API.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CityInfo.API.Controllers;
 
 [ApiController]
 [Route("api/cities")]
+[Authorize]
 public class CitiesController : ControllerBase
 {
     private ICityInfoRepository _dataStore;
@@ -21,9 +23,9 @@ public class CitiesController : ControllerBase
 
     [HttpGet]
     [Route("{id}")]
-    public async Task<ActionResult<CityDto>> GetCity(int id)
+    public async Task<ActionResult<CityDto>> GetCity(int id, bool includePointsOfInterest = false)
     {
-        var city = await _dataStore.GetCity(id);
+        var city = await _dataStore.GetCity(id, includePointsOfInterest);
         if (city == null)
         {
             return NotFound();
